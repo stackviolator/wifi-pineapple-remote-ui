@@ -10,11 +10,11 @@ import subprocess
 class Proxy:
     def __init__(self):
         self.local_host = self.get_ip_from_interface(args.interface)
-        self.local_port = args.local_port
-        self.local_user = "gorilla"
-        self.remote_host = args.remote_host
-        self.remote_port = args.remote_port
-        self.remote_user = args.remote_user
+        self.socks_port = args.socks_port
+        self.c2_user = args.c2_user
+        self.c2_host = args.c2_host
+        self.c2_port = args.c2_port
+        self.pineapple_user = args.pineapple_user
         self.ports = self.get_ports()
         self.key = args.key
 
@@ -50,34 +50,41 @@ class Proxy:
         return ports
 
     def to_pineapple(self):
+        try:
+            self.cleanup()
+        except Exception:
+            print("[-] Could not clean old prox(ies)")
 
         # SSH payload in a not very complex at all format
         # Thanks PEP8
         ssh_port = self.ports["ssh"]
         # Use ssh to send a remote command setting up a dynamic SOCKS5 proxy
-        payload = f"ssh -i {self.key} -p {self.remote_port} pi@{self.remote_host}"
+        payload = f"ssh -i {self.key} -p {self.c2_port} {self.c2_user}@{self.c2_host}"
         # Create dynamic proxy on all interfaces
-        payload += f" 'ssh -D 0.0.0.0:9001 -fNT -p {ssh_port} "
-        payload += f"{self.remote_user}@localhost'"
+        payload += f" 'ssh -D 0.0.0.0:{self.socks_port} -fNT -p {ssh_port} "
+        payload += f"{self.pineapple_user}@localhost'"
 
         # Check if remote host is set
-        if self.remote_host is None:
-            print("[-] Remote host is needed")
+        if self.c2_host is None:
+            print("[-] C2 host is needed")
+            sys.exit(1)
+
+        if self.c2_user is None:
+            print("[-] C2 user is needed")
             sys.exit(1)
 
         os.system(payload)
 
-        print(f"[*] SSH Proxy created on {self.remote_host}:9001")
-
-    def to_pi(self):
-        pass
-
     def run(self):
-        self.to_pineapple()
+        try:
+            self.to_pineapple()
+            print(f"[*] SSH Proxy created on {self.c2_host}:9001")
+        except Exception:
+            print("[-] Proxy failed to start")
 
     def kill_ports(self):
-        payload = f"ssh -i {self.key} -p {self.remote_port}"
-        payload += f" pi@{self.remote_host}"
+        payload = f"ssh -i {self.key} -p {self.c2_port}"
+        payload += f" pi@{self.c2_host}"
         payload += ' "ps aux | grep ssh | grep 9001"'
 
         ports = subprocess.check_output(payload,
@@ -90,8 +97,8 @@ class Proxy:
         for port in ports:
             port = port[9:15]
             if port != '':
-                payload = f"ssh -i {self.key} -p {self.remote_port}"
-                payload += f" pi@{self.remote_host}"
+                payload = f"ssh -i {self.key} -p {self.c2_port}"
+                payload += f" pi@{self.c2_host}"
                 payload += f" 'kill {port}'"
                 os.system(payload)
 
@@ -104,29 +111,26 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Tool to proxy a remote WiFi Pineapple web interface to a local port',
         formatter_class=argparse.RawDescriptionHelpFormatter, epilog=textwrap.dedent('''Example:
-    python proxy_ui.py -rh 108.52.54.142 -i eth0'''))
+    python proxy_ui.py -ch 108.52.54.142 -cu pi -i eth0'''))
 
     parser.add_argument('-i', '--interface', nargs="?", default="lo",
                         help='Specify the interface to use')
-    parser.add_argument('-rh', '--remote-host',
-                        help='Specify the interface to use')
-    parser.add_argument('-rp', '--remote-port', nargs="?", default="2022",
-                        help='Specify the port of the Pineapple interface')
-    parser.add_argument('-ru', '--remote-user', nargs="?", default="root",
-                        help='Specify the user on the Pineapple')
-    parser.add_argument('-lp', '--local-port', nargs="?", default="9001",
-                        help='Specify the port to proxy traffic to')
+    parser.add_argument('-ch', '--c2-host',
+                        help='Specify the IP of the C2 server')
+    parser.add_argument('-cp', '--c2-port', nargs="?", default="2022",
+                        help='Specify the public SSH port of the C2 server')
+    parser.add_argument('-cu', '--c2-user', nargs="?",
+                        help='Specify the user on the the C2 server')
+    parser.add_argument('-pu', '--pineapple-user', nargs="?", default="root",
+                        help='Specify the user on the WiFi Pineapple')
+    parser.add_argument('-sp', '--socks-port', nargs="?", default="9001",
+                        help='Specify the port to open a SOCKS5 proxy on')
     parser.add_argument('-k', '--key', nargs="?", default="~/.ssh/id_rsa",
                         help='Specify the SSH private key file')
 
     args = parser.parse_args()
 
     p = Proxy()
-
-    # Clean old proxies and create a new one
-    p.cleanup()
-    print("")
-    print("[*] Starting proxy")
     p.run()
 
     # Wait for a KeyboardInterrupt to quit
