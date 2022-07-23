@@ -1,0 +1,35 @@
+#!/bin/python
+
+import random
+import os
+import time
+
+target_ip = "108.52.54.142"
+
+
+def create_ssh_proxy():
+    # File for logging
+    with open("/tmp/ssh-tunnel.txt", "w") as f:
+        port = random.randint(1, 65535)
+        while True:
+            # SSH into the Pi to create a file with the port
+            # used for reverse connections
+            os.system(f"ssh -i ~/.ssh/id_rsa -p 2022 pi@{target_ip} 'rm ~/ssh_tunnels/*_ssh; touch ~/ssh_tunnels/{port}_ssh'")
+            f.write("\n---------------------------------------------\n")
+            f.write(f"Creating SSH tunnel at port {port}")
+            f.write("\n---------------------------------------------\n")
+
+            # Create the reverse proxy
+            # Note, -fNT is very important here
+            err = os.system(f'ssh -p 2022 -fNT -R {port}:localhost:22 -i ~/.ssh/id_rsa pi@108.52.54.142')
+
+            if err != 0:
+                print("Error on creating ssh tunnel")
+                time.sleep(5)
+            else:
+                break
+        f.write("\n\n")
+        print(f"Created SSH tunnel at port {port}")
+
+
+create_ssh_proxy()
