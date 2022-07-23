@@ -17,4 +17,4 @@ Scripts to set up proxies to access the web UI of the pineapple remotely
 ## From the attacker
 - Run the script to set up the chains
 `python proxy_ui.py -rh <public server_ip>`
-- From a browser, use a socks5 proxy to proxy traffic through "<Your Server IP>:<port>"
+- From a browser, use a socks5 proxy to proxy traffic through (Your Server IP):(port)
