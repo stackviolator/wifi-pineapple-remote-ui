@@ -1,4 +1,5 @@
 import os
+from colorama import Fore, Back, Style
 import time
 import argparse
 import textwrap
@@ -23,8 +24,10 @@ class Proxy:
             # Shamelessly stolen code
             ipv4 = re.search(re.compile(r'(?<=inet )(.*)(?=\/)', re.M),
                              os.popen(f'ip addr show {interface}').read()).groups()[0]
+            if args.verbose:
+                print_verbose("Local IP is " + ipv4)
         except Exception:
-            print("[-] Invalid interface")
+            print_error("Invalid interface")
             sys.exit(1)
 
         return ipv4
@@ -35,6 +38,16 @@ class Proxy:
             "web": None
         }
 
+        # Check if remote host is set
+        if self.c2_host is None:
+            print_error("C2 host is required")
+            sys.exit(1)
+
+        # Check if remote user is set
+        if self.c2_user is None:
+            print_error("C2 user is required")
+            sys.exit(1)
+
         x = subprocess.check_output(f"ssh -p {self.c2_port} {self.c2_user}@{self.c2_host} 'ls ~/ssh_tunnels'",
                                     shell=True, text=True)
         x = x.split()
@@ -42,8 +55,12 @@ class Proxy:
         for port in x:
             if "ssh" in port:
                 ports["ssh"] = port[:-4]
+                if args.verbose:
+                    print_verbose(f"Reverse ssh proxy to Pineapple found at {self.c2_host}:{ports['ssh']}")
             elif "web" in port:
                 ports["web"] = port[:-4]
+                if args.verbose:
+                    print_verbose(f"Reverse web proxy to Pineapple found at {self.c2_host}:{ports['web']}")
             else:
                 print("No web or ssh port found")
                 sys.exit(1)
@@ -53,7 +70,8 @@ class Proxy:
         try:
             self.cleanup()
         except Exception:
-            print("[-] Could not clean old prox(ies)")
+            print_error("Could not clean old prox(ies)")
+            raise Exception
 
         # SSH payload in a not very complex at all format
         # Thanks PEP8
@@ -61,30 +79,28 @@ class Proxy:
         # Use ssh to send a remote command setting up a dynamic SOCKS5 proxy
         payload = f"ssh -i {self.key} -p {self.c2_port} {self.c2_user}@{self.c2_host}"
         # Create dynamic proxy on all interfaces
-        payload += f" 'ssh -D 0.0.0.0:{self.socks_port} -fNT -p {ssh_port} "
+        payload += " 'ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+        payload += f" -D 0.0.0.0:{self.socks_port} -fNT -p {ssh_port} "
         payload += f"{self.pineapple_user}@localhost'"
 
-        # Check if remote host is set
-        if self.c2_host is None:
-            print("[-] C2 host is needed")
-            sys.exit(1)
-
-        if self.c2_user is None:
-            print("[-] C2 user is needed")
-            sys.exit(1)
+        if args.verbose:
+            print_verbose(f"SSH payload is: {payload}")
 
         os.system(payload)
+
 
     def run(self):
         try:
             self.to_pineapple()
-            print(f"[*] SSH Proxy created on {self.c2_host}:9001")
+            print_success(f"SSH Proxy created on {self.c2_host}:9001")
         except Exception:
-            print("[-] Proxy failed to start")
+            print_error("Proxy failed to start")
+            sys.exit(0)
 
     def kill_ports(self):
-        payload = f"ssh -i {self.key} -p {self.c2_port}"
-        payload += f" {c2_user}@{self.c2_host}"
+        payload = f"ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "
+        payload += f"-i {self.key} -p {self.c2_port}"
+        payload += f" {self.c2_user}@{self.c2_host}"
         payload += ' "ps aux | grep ssh | grep 9001"'
 
         ports = subprocess.check_output(payload,
@@ -97,15 +113,32 @@ class Proxy:
         for port in ports:
             port = port[9:15]
             if port != '':
-                payload = f"ssh -i {self.key} -p {self.c2_port}"
-                payload += f" {c2_user}@{self.c2_host}"
+                payload = f"ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "
+                payload += f"-i {self.key} -p {self.c2_port}"
+                payload += f" {self.c2_user}@{self.c2_host}"
                 payload += f" 'kill {port}'"
+
+
+                if args.verbose:
+                    print_verbose(f"SSH payload is: {payload}")
+
                 os.system(payload)
 
     def cleanup(self):
-        print("[*] Closing old SSH prox(ies)...")
+        print_info("Closing old SSH prox(ies)...")
         self.kill_ports()
 
+def print_error(message):
+    print(f"[\U0000274c] {message}")
+
+def print_verbose(message):
+    print(f"[{Fore.YELLOW}v{Style.RESET_ALL}] {message}")
+
+def print_success(message):
+    print(f"[\U00002705] {message}")
+
+def print_info(message):
+    print(f"[\U00002139] {message}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -127,6 +160,8 @@ if __name__ == "__main__":
                         help='Specify the port to open a SOCKS5 proxy on')
     parser.add_argument('-k', '--key', nargs="?", default="~/.ssh/id_rsa",
                         help='Specify the SSH private key file')
+    parser.add_argument('-v', '--verbose', action=argparse.BooleanOptionalAction,
+                        help='Specify the SSH private key file')
 
     args = parser.parse_args()
 
@@ -139,6 +174,6 @@ if __name__ == "__main__":
             time.sleep(1)
         except KeyboardInterrupt:
             print("")
-            print("[*] User quit")
+            print_success("User quit caught")
             p.cleanup()
             sys.exit(0)
