@@ -1,3 +1,12 @@
+<h1 align="center">
+  <br>
+  <a href="https://github.com/stackviolator/wifi-pineapple-remote-ui"><img src="img/cli.png" alt="cli"></a>
+  <br>
+  <br>
+  <a href="https://github.com/stackviolator/wifi-pineapple-remote-ui"><img src="img/web.png" alt="web"></a>
+  <br>
+</h1>
+
 # WiFi Pineapple Web Proxy
 Scripts to set up proxies to access the web UI of the pineapple remotely
 # Setup
