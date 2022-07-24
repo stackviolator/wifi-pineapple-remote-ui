@@ -84,7 +84,7 @@ class Proxy:
 
     def kill_ports(self):
         payload = f"ssh -i {self.key} -p {self.c2_port}"
-        payload += f" pi@{self.c2_host}"
+        payload += f" {c2_user}@{self.c2_host}"
         payload += ' "ps aux | grep ssh | grep 9001"'
 
         ports = subprocess.check_output(payload,
@@ -98,7 +98,7 @@ class Proxy:
             port = port[9:15]
             if port != '':
                 payload = f"ssh -i {self.key} -p {self.c2_port}"
-                payload += f" pi@{self.c2_host}"
+                payload += f" {c2_user}@{self.c2_host}"
                 payload += f" 'kill {port}'"
                 os.system(payload)
 

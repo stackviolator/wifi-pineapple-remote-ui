@@ -3,7 +3,7 @@ Scripts to set up proxies to access the web UI of the pineapple remotely
 # Setup
 ## On the WiFi Pineapple
 - These scripts will create reverse SSH proxies to allow communication from the C2 server to the pineapple
-- Install the scripts located in "/for_pi" to run as cron on reboot\
+- Install the scripts located in "/for_server" to run as cron on reboot\
 `crontab -e`\
 `@reboot /usr/bin/python /path/to/file1`\
 `@reboot /usr/bin/python /path/to/file2`
@@ -17,5 +17,5 @@ Scripts to set up proxies to access the web UI of the pineapple remotely
 ## From the attacker
 - Run the script to set up the chains
 `python proxy_ui.py -rh <public server_ip>`
-- From a browser, use a socks5 proxy to proxy traffic through `(Your Server IP):(port)`
+- From a browser, use a socks5 proxy to proxy traffic through `<Your Server IP>:<port>`
 - Navigate to `localhost:1471`

@@ -24,7 +24,7 @@ def create_ssh_proxy():
 
             # Create the reverse proxy
             # Note, -fNT is very important here
-            err = os.system(f'ssh -p 2022 -fNT -R {port}:localhost:22 -i ~/.ssh/id_rsa pi@{target_ip}')
+            err = os.system(f'ssh -p 2022 -fNT -R {port}:localhost:22 -i ~/.ssh/id_rsa {user}@{target_ip}')
 
             if err != 0:
                 print("Error on creating ssh tunnel")
