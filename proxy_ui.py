@@ -3,7 +3,6 @@ from colorama import Fore, Back, Style
 import time
 import argparse
 import textwrap
-import re
 import sys
 import subprocess
 import socket
