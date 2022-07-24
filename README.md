@@ -10,6 +10,13 @@
 # WiFi Pineapple Web Proxy
 Scripts to set up proxies to access the web UI of the pineapple remotely
 # Setup
+# Installation
+- Review installation and setup video [here](https://google.com)
+
+## Requirements
+- Python 3.10+
+- `pip install requirements.txt`
+
 ## On the WiFi Pineapple
 - These scripts will create reverse SSH proxies to allow communication from the C2 server to the pineapple
 - Install the scripts located in "/for_server" to run as cron on reboot\

@@ -6,6 +6,9 @@ import textwrap
 import re
 import sys
 import subprocess
+import socket
+import fcntl
+import struct
 
 
 class Proxy:
@@ -19,11 +22,17 @@ class Proxy:
         self.ports = self.get_ports()
         self.key = args.key
 
-    def get_ip_from_interface(self, interface):
+    def get_ip_from_interface(self, ifname):
         try:
             # Shamelessly stolen code
-            ipv4 = re.search(re.compile(r'(?<=inet )(.*)(?=\/)', re.M),
-                             os.popen(f'ip addr show {interface}').read()).groups()[0]
+            # https://code.activestate.com/recipes/439094-get-the-ip-address-associated-with-a-network-inter/
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            ipv4 = socket.inet_ntoa(fcntl.ioctl(
+                s.fileno(),
+                0x8915,  # SIOCGIFADDR
+                struct.pack('256s', bytes(ifname[:15], 'utf-8'))
+            )[20:24])
+
             if args.verbose:
                 print_verbose("Local IP is " + ipv4)
         except Exception:
