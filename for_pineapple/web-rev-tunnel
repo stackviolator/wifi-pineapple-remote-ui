@@ -4,8 +4,10 @@ import random
 import os
 import time
 
-target_ip = "108.52.54.142"
-
+# Change to ip of c2 server
+target_ip = "CHANGE ME"
+# Change to user on c2 server
+user = "CHANGE ME"
 
 def create_web_proxy():
     # File for logging
@@ -14,14 +16,14 @@ def create_web_proxy():
         while True:
             # SSH into the Pi to create a file with the port
             # used for reverse connections
-            os.system(f"ssh -i ~/.ssh/id_rsa -p 2022 pi@{target_ip} 'rm ~/ssh_tunnels/*_web; touch ~/ssh_tunnels/{port}_web'")
+            os.system(f"ssh -i ~/.ssh/id_rsa -p 2022 {user}@{target_ip} 'rm ~/ssh_tunnels/*_web; touch ~/ssh_tunnels/{port}_web'")
             f.write("\n---------------------------------------------\n")
             f.write(f"Creating Web tunnel at port {port}")
             f.write("\n---------------------------------------------\n")
 
             # Create the reverse proxy
             # Note, -fNT is very important here
-            err = os.system(f'ssh -p 2022 -fNT -R 108.52.54.142:{port}:localhost:1471 -i ~/.ssh/id_rsa pi@108.52.54.142')
+            err = os.system(f'ssh -p 2022 -fNT -R {target_ip}:{port}:localhost:1471 -i ~/.ssh/id_rsa {user}@{target_ip}')
 
             if err != 0:
                 print("Error on creating web tunnel")
