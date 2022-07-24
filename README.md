@@ -28,3 +28,6 @@ Scripts to set up proxies to access the web UI of the pineapple remotely
 `python proxy_ui.py -rh <public server_ip>`
 - From a browser, use a socks5 proxy to proxy traffic through `<Your Server IP>:<port>`
 - Navigate to `localhost:1471`
+
+## Youtube Video
+[Hak5 WiFi Pineapple Web UI Proxy](https://www.youtube.com/watch?v=vYFBOG4tfBQ)
