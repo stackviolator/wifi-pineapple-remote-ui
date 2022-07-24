@@ -10,7 +10,7 @@ Scripts to set up proxies to access the web UI of the pineapple remotely
 
 ## On the server
 - A server needs to be publically accessible and reachable by the pineapple
-- Add the SSH public key of your attacker box and the wifi pineapple to ~/.ssh/authorized_keys
+- Add the SSH public key of your attacker box and the wifi pineapple to `~/.ssh/authorized_keys`
 - Add `connect_pineapple` to `/usr/bin/`
 
 # Usage
