@@ -35,7 +35,7 @@ class Proxy:
             "web": None
         }
 
-        x = subprocess.check_output("ssh pi 'ls ~/ssh_tunnels'",
+        x = subprocess.check_output(f"ssh -p {self.c2_port} {self.c2_user}@{self.c2_host} 'ls ~/ssh_tunnels'",
                                     shell=True, text=True)
         x = x.split()
 
